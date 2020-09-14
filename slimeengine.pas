@@ -36,7 +36,7 @@ uses
    Procedure DRAWSORT();
    function CollisionAll (obj : TSEOBJECT): integer;
    function Collision2 (obj, obj2 : TSEOBJECT):boolean;
-
+   procedure sPixelFormat (DC : HDC);
      var
     SECanvas : TCanvas; // wat are u doing there f*#@** CANVAS? I HATE U! I KILL U! :D
     GameScene : TSEARRAY; //gamescene
