@@ -8,46 +8,37 @@ unit SlimeEngine;
 interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils,System.UITypes, System.Variants, System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls, Math,OpenGL;
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls, Math, OpenGL;
+
    type TTransform = record
-    X,Y,Z,SX,SY{,SZ discomment if u make 3D game but just not useful},R : integer;
+    X,Y,Z,SX,SY,R : integer;
    end;
-   type T2COLOR = record  // color type
-   R : byte;
-   G : byte;
-   B : byte;
-   A : byte;
-   L : boolean;
+
+   type T2COLOR = record
+    R : byte; G : byte; B : byte; A : byte; L : boolean;
    end;
-   type TSEObject = record   // recoooord my sooong :DD
-    tr : TTransform;
-    parent : TObject;
-    ID : integer;
-    Color : T2COLOR;
+
+   type TSEObject = record
+    tr : TTransform; parent : TObject; ID : integer; Color : T2COLOR;
    end;
-   type TSEArray = array of TSEobject;  // ._.
-   procedure Create (Sender:TObject; Handle:HWND);
-   procedure Destroy ();
-   procedure Add (obj:TSEObject);
-   procedure Delete (ID : integer);
-   procedure Clear ();
-   procedure Draw ();
-   procedure GameTick();
+
+   type TSEArray = array of TSEobject;
+
+   procedure CREATE (Handle:HWND);
+   procedure DESTROY ();
+   procedure ADD ( obj : TSEOBJECT; scene : TSEARRAY);
+   procedure DELETE (ID : integer; scene : TSEARRAY);
+   procedure CLEAR (scene : TSEARRAY);
+   procedure DRAW (scene : TSEARRAY);
+   procedure GAMETICK(scene : TSEARRAY);
    Procedure DRAWSORT();
-   function CollisionAll (obj : TSEOBJECT): integer;
+   function CollisionAll (obj : TSEOBJECT;scene : TSEARRAY): integer;
    function Collision2 (obj, obj2 : TSEOBJECT):boolean;
    procedure sPixelFormat (DC : HDC);
      var
-    SECanvas : TCanvas; // wat are u doing there f*#@** CANVAS? I HATE U! I KILL U! :D
-    GameScene : TSEARRAY; //gamescene
-    Init : boolean;    // ._.
-    Sorted : array of integer; // '_'
-    cache : array of integer; //x_x
-    systemtime : longint;  // wat
-
-
+    Init : boolean; systemtime : longint; CAMX,CAMY:integer;
+     GameScene : TSEARRAY;
   IMPLEMENTATION
-
 
   procedure sPixelFormat(DC:HDC);
 const
@@ -94,7 +85,7 @@ begin
    glBlendFunc(GL_SRC_ALPHA,GL_DST_ALPHA);   // set blenging properties
 end;
 
-procedure Create(Sender: TObject; Handle : HWND);
+procedure Create(Handle : HWND);
 var DC:HDC;
     RC:HGLRC;
 begin
@@ -103,67 +94,56 @@ begin
    RC:=wglCreateContext(DC); //makes OpenGL window out of DC
    wglMakeCurrent(DC, RC);   //makes OpenGL window active
    GLInit;                   //initialize OpenGL
-   SetLength(GameScene,1); //GameScene AntiBug
+   //SetLength(GameScene,1); //GameScene AntiBug
 end;
 
-   procedure Add (obj:TSEObject);  //add object
+   procedure Add ( obj : TSEOBJECT; scene : TSEARRAY);  //add object
    var
    l : integer;
    begin
      systemtime := systemtime + 1;
-     l := Length(GameScene);
-     try
-       begin
-       SetLength(GameScene, l + 1);
-       obj.ID := systemtime;
-       GameScene[l] := obj;
-       end;
-     except
-       begin
-       ShowMessage('Error Add New object!');
-       end;
-
-      end;
-
+     l := Length(scene);
+     SetLength(gamescene, l + 1);
+     obj.ID := systemtime;
+     GameScene[l] := obj;
    end;
 
-   procedure Delete (ID : integer); //delete object
+   procedure Delete (ID : integer; scene : TSEARRAY); //delete object
    var
    last : integer;
      begin
       if ID > 0 then
        begin
-       Last:= high( GameScene );
-       if ID <  Last then move( GameScene[ID+1], GameScene[ ID ],
-       (Last-ID) * sizeof( GameScene[ID] )  );
-       setLength( GameScene, Last );
+       Last:= high( scene );
+       if ID <  Last then move( scene[ID+1], scene[ ID ],
+       (Last-ID) * sizeof( scene[ID] )  );
+       setLength( scene, Last );
        end;
      end;
 
-   procedure Clear ();  // clear scene
+   procedure Clear (scene : TSEARRAY);  // clear scene
      begin
-     GameScene := nil;
-     SetLength(GameScene,1);
+     scene := nil;
+     SetLength(Scene,1);
      end;
 
    procedure Destroy ();  // destroy myself :D (joke)
      begin
-     SECanvas := nil;
      end;
 
-   procedure GameTick (); // \-._.-/
+   procedure GameTick (scene : TSEARRAY); // \-._.-/
      begin
      drawsort;
      end;
 
-    function CollisionAll (obj : TSEOBJECT):integer;
+    function CollisionAll (obj : TSEOBJECT;scene : TSEARRAY):integer;
     var
     i : integer; obj2 : TSEOBJECT;
     begin
     result := 0;
-    for i := 0 to Length(GameScene)-1 do
+    for i := 0 to Length(Scene)-1 do
       begin
-      obj2 := GameScene [i];
+      obj2 := Scene [i];
       if Collision2(obj,obj2) then
        begin
        result := i;
@@ -184,19 +164,17 @@ end;
      end;
     end;
 
-    procedure draw();
+    procedure draw(scene : TSEARRAY);
       var i : integer;
       obj : TSEObject;
-begin
+   begin
    glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT); //wash dish
    glLoadIdentity; // pick food
-    drawsort;     // sort food
-    glpushmatrix;    // save hand state
-    glTranslatef(0, 50, 0);    // move hand
-
-       for i := 0 to Length(GameScene)-1 do  //pick food and drop it in dish
+   glpushmatrix;    // save hand state
+   glTranslatef(0, 50, 0);    // move hand
+       for i := 0 to Length(Scene)-1 do  //pick food and drop it in dish
     begin
-    obj := GameScene[i];
+    obj := Scene[i];
     if obj.Color.l then glEnable(GL_BLEND) else glDisable(GL_BLEND);
     glColor(obj.Color.r/255,obj.Color.g/255,obj.Color.b/255,obj.Color.a/255); //color
     glBegin(GL_Polygon);
@@ -209,6 +187,7 @@ begin
    glpopmatrix; // restore hand position uwu
    SwapBuffers(wglGetCurrentDC); //drop dish in trash :DDD and buy new dish
     end;
+
  procedure drawsort();
  begin
 
