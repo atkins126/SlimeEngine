@@ -1,7 +1,11 @@
 {
   Slime engine - New cool Game Engine that writted in Delphi 10.3 :D (INDEV)
   License : GPL-3.0
+  By UtoECat :DD
+  Delphi : 10.3
 
+Thanks to :
+Zedxxx (https://www.sql.ru/forum/memberinfo.aspx?mid=263077) - he help me with array
 }
 unit SlimeEngine;
 
@@ -26,18 +30,22 @@ uses
 
    procedure CREATE (Handle:HWND);
    procedure DESTROY ();
-   procedure ADD ( obj : TSEOBJECT; scene : TSEARRAY);
-   procedure DELETE (ID : integer; scene : TSEARRAY);
-   procedure CLEAR (scene : TSEARRAY);
-   procedure DRAW (scene : TSEARRAY);
-   procedure GAMETICK(scene : TSEARRAY);
+   procedure ADD ( obj : TSEOBJECT; var scene : TSEARRAY);
+   procedure DELETE (ID : integer; var scene : TSEARRAY);
+   procedure CLEAR (var scene : TSEARRAY);
+   procedure DRAW (var scene : TSEARRAY);
+   procedure GAMETICK(var scene : TSEARRAY);
    Procedure DRAWSORT();
-   function CollisionAll (obj : TSEOBJECT;scene : TSEARRAY): integer;
+   function CollisionAll (obj : TSEOBJECT;var scene : TSEARRAY): integer;
    function Collision2 (obj, obj2 : TSEOBJECT):boolean;
    procedure sPixelFormat (DC : HDC);
+   procedure resizevp (w : integer; h:integer);
+   procedure resizeconst(x,y : integer);
      var
     Init : boolean; systemtime : longint; CAMX,CAMY:integer;
-     GameScene : TSEARRAY;
+
+     scene : TSEARRAY;
+     crx, cry : integer;
   IMPLEMENTATION
 
   procedure sPixelFormat(DC:HDC);
@@ -93,22 +101,20 @@ begin
      SPixelFormat(DC);
    RC:=wglCreateContext(DC); //makes OpenGL window out of DC
    wglMakeCurrent(DC, RC);   //makes OpenGL window active
-   GLInit;                   //initialize OpenGL
-   //SetLength(GameScene,1); //GameScene AntiBug
+   GLInit;
+   glEnable(GL_COLOR);                   //initialize OpenGL
 end;
 
-   procedure Add ( obj : TSEOBJECT; scene : TSEARRAY);  //add object
+   procedure Add (obj : TSEOBJECT; var scene : TSEARRAY);  //add object
    var
    l : integer;
    begin
-     systemtime := systemtime + 1;
      l := Length(scene);
-     SetLength(gamescene, l + 1);
-     obj.ID := systemtime;
-     GameScene[l] := obj;
+     SetLength(scene, l + 1);
+     Scene[l] := obj;
    end;
 
-   procedure Delete (ID : integer; scene : TSEARRAY); //delete object
+   procedure Delete (ID : integer; var scene : TSEARRAY); //delete object
    var
    last : integer;
      begin
@@ -121,7 +127,7 @@ end;
        end;
      end;
 
-   procedure Clear (scene : TSEARRAY);  // clear scene
+   procedure Clear (var scene : TSEARRAY);  // clear scene
      begin
      scene := nil;
      SetLength(Scene,1);
@@ -131,12 +137,12 @@ end;
      begin
      end;
 
-   procedure GameTick (scene : TSEARRAY); // \-._.-/
+   procedure GameTick (var scene : TSEARRAY); // \-._.-/
      begin
      drawsort;
      end;
 
-    function CollisionAll (obj : TSEOBJECT;scene : TSEARRAY):integer;
+    function CollisionAll (obj : TSEOBJECT;var scene : TSEARRAY):integer;
     var
     i : integer; obj2 : TSEOBJECT;
     begin
@@ -164,14 +170,13 @@ end;
      end;
     end;
 
-    procedure draw(scene : TSEARRAY);
+    procedure draw(var scene : TSEARRAY);
       var i : integer;
       obj : TSEObject;
    begin
    glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT); //wash dish
    glLoadIdentity; // pick food
    glpushmatrix;    // save hand state
-   glTranslatef(0, 50, 0);    // move hand
        for i := 0 to Length(Scene)-1 do  //pick food and drop it in dish
     begin
     obj := Scene[i];
@@ -192,5 +197,20 @@ end;
  begin
 
  end;  // I WILL MAKE IT LATER :D
-end.
+
+ procedure resizevp (w : integer; h:integer);
+ begin glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+   glOrtho (0,w,h,0,-500,500);
+   glMatrixMode(GL_MODELVIEW);
+   glViewport(-crx, -cry, w, h);
+   glLoadIdentity;
+ end;
+
+ procedure resizeconst (x,y : integer);
+ begin
+  crx := x; cry := y;
+ end;
+ end.
+
 //go home!
