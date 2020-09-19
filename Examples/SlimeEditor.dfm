@@ -2,7 +2,7 @@ object Form7: TForm7
   Left = 0
   Top = 0
   Caption = 'Form7'
-  ClientHeight = 985
+  ClientHeight = 845
   ClientWidth = 752
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -60,6 +60,14 @@ object Form7: TForm7
     Caption = 'Clear'
     TabOrder = 4
     OnClick = clr
+  end
+  object CBP: TCheckBox
+    Left = 128
+    Top = 54
+    Width = 97
+    Height = 17
+    Caption = 'Player'
+    TabOrder = 5
   end
   object Timer1: TTimer
     Interval = 10
